@@ -1,3 +1,127 @@
+# Setup
+
+```
+git clone https://github.com/SUDO-AI-3D/zero123plus.git
+cd zero123plus
+pip install -r requirements.txt
+pip install diffusers==0.29.0 transformers==4.41.2 rembg==2.0.57
+```
+
+# Implementation
+```python
+import torch
+import requests
+from PIL import Image
+from io import BytesIO
+from diffusers import DiffusionPipeline, EulerAncestralDiscreteScheduler
+
+# Load the pipeline
+pipeline = DiffusionPipeline.from_pretrained(
+    "sudo-ai/zero123plus-v1.1", custom_pipeline="sudo-ai/zero123plus-pipeline",
+    torch_dtype=torch.float16
+)
+
+# Feel free to tune the scheduler!
+# `timestep_spacing` parameter is not supported in older versions of `diffusers`
+# so there may be performance degradations
+# We recommend using `diffusers==0.20.2`
+pipeline.scheduler = EulerAncestralDiscreteScheduler.from_config(
+    pipeline.scheduler.config, timestep_spacing='trailing'
+)
+pipeline.to('cuda:0')
+
+#---------------------------------------Change here-----------------------------------------#
+
+# Google Drive file ID
+# link: https://drive.google.com/file/d/1JzEbOYU28Ge0_gboNO6LS-oq0TpbZr3-/view?usp=drive_link
+file_id = '1JzEbOYU28Ge0_gboNO6LS-oq0TpbZr3-'
+
+# Google Drive download URL
+url = f'https://drive.google.com/uc?export=download&id={file_id}'
+
+# Make the request
+response = requests.get(url, stream=True)
+
+#---------------------------------------Change here-----------------------------------------#
+
+# Open the image (you can choose to upload image directly)
+#cond = Image.open(requests.get("https://d.skis.ltd/nrp/sample-data/lysol.png", stream=True).raw)
+#cond = Image.open('a1.png') # local image
+cond = Image.open(BytesIO(response.content)) # google drive link
+
+# Get the current dimensions
+width, height = cond.size
+
+# Find the size of the square
+new_size = max(width, height)
+
+# Create a new background image with white color (or any color you prefer)
+new_img = Image.new("RGB", (new_size, new_size), (255, 255, 255))
+
+# Paste the original image onto the center of the new background
+x_offset = (new_size - width) // 2
+y_offset = (new_size - height) // 2
+new_img.paste(cond, (x_offset, y_offset))
+
+# Save or show the new image
+new_img.save('resized.png')  # Save the image
+new_img.show()  # Show the image (optional)
+
+cond = Image.open('resized.png')
+
+# Run the pipeline!
+result = pipeline(cond, num_inference_steps=28).images[0]
+# for general real and synthetic images of general objects
+# usually it is enough to have around 28 inference steps
+# for images with delicate details like faces (real or anime)
+# you may need 75-100 steps for the details to construct
+
+result.show()
+result.save("output.png")
+```
+![image](https://github.com/TiasheKnight/zero123plus/assets/115419422/60f97206-372f-4241-9913-1216fa162d34)
+The initial step is completed. The output can be viewed using the following code:
+```python
+import matplotlib.pyplot as plotlib
+
+plotlib.imshow(plotlib.imread('output.png'))
+```
+Our next step is to slice our output into 6 individual photos.
+```python
+from PIL import Image
+
+# Load the image
+image_path = "output.png"
+image = Image.open(image_path)
+
+# Define the dimensions of each slice (assuming the image is 2x3 grid)
+slice_width = image.width // 2
+slice_height = image.height // 3
+
+# List to hold the coordinates for cropping (left, upper, right, lower)
+slices = [
+    (0, 0, slice_width, slice_height),
+    (slice_width, 0, image.width, slice_height),
+    (0, slice_height, slice_width, 2 * slice_height),
+    (slice_width, slice_height, image.width, 2 * slice_height),
+    (0, 2 * slice_height, slice_width, image.height),
+    (slice_width, 2 * slice_height, image.width, image.height)
+]
+
+# Crop and save each slice
+for i, coords in enumerate(slices):
+    cropped_image = image.crop(coords)
+    cropped_image.save(f"output_{i+1}.png")
+
+print("Slices saved successfully.")
+
+```
+Finally, we can view our individual photos using the same code
+```python
+plotlib.imshow(plotlib.imread('output_1.png')) # change number in output_{}.png
+```
+
+
 # Zero123++: A Single Image to Consistent Multi-view Diffusion Base Model
 
 ![Teaser](resources/teaser-low.jpg)
