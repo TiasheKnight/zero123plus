@@ -125,7 +125,7 @@ plotlib.imshow(plotlib.imread('output_1.png')) # change number in output_{}.png
 ![image](https://github.com/TiasheKnight/zero123plus/assets/115419422/e7594576-0b37-4e83-9441-0d18b6370c87)
 
 # End
-# ___________________________________________________________________________________________________________
+# ____________________________________________________________________________
 
 # Zero123++: A Single Image to Consistent Multi-view Diffusion Base Model
 
