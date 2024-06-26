@@ -79,13 +79,15 @@ result = pipeline(cond, num_inference_steps=28).images[0]
 result.show()
 result.save("output.png")
 ```
-![image](https://github.com/TiasheKnight/zero123plus/assets/115419422/60f97206-372f-4241-9913-1216fa162d34)
+
 The initial step is completed. The output can be viewed using the following code:
 ```python
 import matplotlib.pyplot as plotlib
 
 plotlib.imshow(plotlib.imread('output.png'))
 ```
+![image](https://github.com/TiasheKnight/zero123plus/assets/115419422/60f97206-372f-4241-9913-1216fa162d34)
+
 Our next step is to slice our output into 6 individual photos.
 ```python
 from PIL import Image
@@ -120,8 +122,10 @@ Finally, we can view our individual photos using the same code
 ```python
 plotlib.imshow(plotlib.imread('output_1.png')) # change number in output_{}.png
 ```
+![image](https://github.com/TiasheKnight/zero123plus/assets/115419422/e7594576-0b37-4e83-9441-0d18b6370c87)
 
-
+#End
+#___________________________________________________________________________________________________________
 # Zero123++: A Single Image to Consistent Multi-view Diffusion Base Model
 
 ![Teaser](resources/teaser-low.jpg)
